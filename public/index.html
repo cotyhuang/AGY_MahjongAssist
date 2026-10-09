@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>台灣麻將 防放槍輔助</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,"Noto Sans TC",sans-serif;background:#0f3d2e;color:#eee}
+header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0a2a20}
+header h1{font-size:18px;margin:0}
+button,select,input{font:inherit}
+button{cursor:pointer}
+.btn{background:#2d6a4f;color:#fff;border:0;border-radius:8px;padding:8px 12px}
+.btn.red{background:#9b2c2c}
+.wrap{display:grid;gap:10px;padding:10px;grid-template-columns:1fr;align-items:start}
+@media(min-width:900px){.wrap{grid-template-columns:1.1fr 1fr}}
+.card{background:#14563f;border-radius:12px;padding:10px;margin-bottom:10px}
+.card h2{font-size:15px;margin:0 0 8px}
+.targets{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:10px 14px;border-radius:20px;background:#0a2a20;color:#cde;border:2px solid transparent}
+.chip.on{background:#f4d35e;color:#222;font-weight:700}
+.chip.alert{border-color:#ff6b6b}
+.opts{margin-top:8px;display:flex;gap:14px;align-items:center;font-size:14px;flex-wrap:wrap}
+.opts label{display:flex;align-items:center;gap:4px}
+.opts input[type=checkbox]{width:20px;height:20px}
+select,.num{background:#0a2a20;color:#eee;border:1px solid #2d6a4f;border-radius:6px;padding:6px}
+.grid{display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-top:8px}
+.t{position:relative;aspect-ratio:3/4;border-radius:6px;background:#fdfbf2;color:#222;border:0;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;padding:0}
+.t .n{font-size:clamp(16px,3.2vw,26px)}
+.t .s{font-size:clamp(10px,1.8vw,14px)}
+.t.m .n,.t.m .s{color:#c0392b}.t.p .n,.t.p .s{color:#1565c0}.t.s2 .n,.t.s2 .s{color:#1b7a3a}
+.t.z .n{font-size:clamp(14px,2.8vw,22px)}
+.t.f{background:#ffe9f0}.t.f .n{color:#c2185b}
+.t .c{position:absolute;right:2px;top:1px;font-size:10px;color:#777;font-weight:400}
+.t.dead{opacity:.35}
+.t.sm{width:34px;aspect-ratio:auto;height:44px}
+.t.sm .n{font-size:15px}.t.sm .s{font-size:10px}
+.list{display:flex;flex-wrap:wrap;gap:3px;min-height:46px;align-items:flex-start}
+.row{margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed #2d6a4f}
+.row b{font-size:13px}
+.row .melds .t{outline:2px solid #f4d35e}
+.res{display:grid;gap:6px}
+.r{display:flex;gap:8px;align-items:center;background:#0a2a20;border-radius:8px;padding:6px}
+.badge{min-width:68px;text-align:center;border-radius:6px;padding:6px 4px;font-weight:700;color:#111}
+.b0{background:#52e08a}.b1{background:#b6e354}.b2{background:#f4d35e}.b3{background:#ff9f43}.b4{background:#ff6b6b}
+.detail{font-size:12px;color:#cde;flex:1}
+.hint{font-size:12px;color:#9cb}
+.pl{background:#0a2a20;border-radius:8px;padding:8px;margin-bottom:6px;font-size:13px}
+.pl b{font-size:14px}
+.bar{height:8px;border-radius:4px;background:#244;margin:4px 0;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#52e08a,#f4d35e,#ff6b6b)}
+.pl ul{margin:4px 0 0;padding-left:18px;color:#f4d35e}
+.tai{color:#ffd1e3}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#000c;color:#fff;padding:8px 16px;border-radius:20px;opacity:0;transition:.3s;pointer-events:none}
+#toast.on{opacity:1}
+.detail .tg{color:#9cb}
+@media (min-width:900px) and (orientation:landscape),(min-width:600px) and (orientation:portrait){
+  html,body{height:100%;overflow:hidden}
+  body{display:flex;flex-direction:column;height:100dvh}
+  header{padding:4px 10px;flex:none}
+  header h1{font-size:15px}
+  .btn{padding:5px 10px}
+  .wrap{flex:1;min-height:0;grid-template-columns:minmax(0,1.15fr) minmax(0,.95fr) minmax(0,1.1fr);padding:6px;gap:6px}
+  .col{min-height:0;overflow-y:auto}
+  .card{padding:6px 8px;margin-bottom:6px}
+  .card h2{font-size:13px;margin:0 0 4px}
+  .chip{padding:6px 10px;font-size:14px}
+  .opts{margin-top:4px;gap:8px}
+  .grid{gap:3px;margin-top:4px}
+  .t{aspect-ratio:4/5}
+  .t .n{font-size:18px}.t .s{font-size:11px}.t.z .n{font-size:16px}
+  .t.sm{width:26px;height:34px;aspect-ratio:auto}.t.sm .n{font-size:13px}.t.sm .s{font-size:9px}
+  .list{min-height:0}
+  .row{margin-bottom:4px;padding-bottom:3px}
+  .res{grid-template-columns:1fr 1fr}
+  .r{padding:3px;gap:5px}
+  .badge{min-width:50px;padding:3px;font-size:12px}
+  .detail{font-size:11px;line-height:1.3}
+  .pl{padding:4px 6px;margin-bottom:4px;font-size:11px;line-height:1.35}
+  .pl b{font-size:12px}
+  .bar{height:5px;margin:2px 0}
+  .hint{font-size:11px}
+  /* 牌盤縮小 25%：原本約 48px 寬 → 36px */
+  #picker{grid-template-columns:repeat(9,36px)!important;justify-content:start}
+  #fpicker{grid-template-columns:repeat(8,36px)!important;justify-content:start}
+  #picker .t,#fpicker .t{width:36px}
+  #picker .t .n{font-size:14px}#picker .t .s{font-size:8px}#picker .t.z .n{font-size:12px}
+  #fpicker .t .n{font-size:14px}
+  #picker .t .c{font-size:8px;right:1px;top:0}
+}
+/* 平板直放：上排 輸入｜已輸入牌；下排 安全度｜對手分析 */
+@media (min-width:600px) and (orientation:portrait){
+  .wrap{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:auto minmax(0,1fr)}
+  #colA,#colB{overflow:visible}
+  #colC{grid-column:1/3;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px;align-content:start}
+  #colC .card{margin:0}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🀄 台灣麻將防放槍輔助</h1>
+  <div><button class="btn" id="undo">↶ 復原</button> <button class="btn red" id="reset">新局</button></div>
+</header>
+<div class="wrap">
+  <div class="col" id="colA">
+    <div class="card">
+      <h2>① 選位置 → 點牌</h2>
+      <div class="targets" id="targets"></div>
+      <div class="opts" id="opts"></div>
+      <div class="grid" id="picker"></div>
+      <div class="grid" id="fpicker" style="grid-template-columns:repeat(8,1fr)"></div>
+      <div class="hint" style="margin-top:4px">🌸 花牌加給目前選的玩家（手牌／我打出＝自己）。牌右上小數字＝未見張數。</div>
+    </div>
+    <div class="card">
+      <div class="opts" style="margin:0">
+        <b style="font-size:13px">局況</b>
+        <label>莊家 <select id="dealer"></select></label>
+        <label>圈風 <select id="quan"></select></label>
+        <label>連莊 <input class="num" id="rz" type="number" min="0" max="20" style="width:56px"></label>
+      </div>
+      <div class="hint" style="margin-top:4px">座位：我 → 下家 → 對家 → 上家；莊家為東，依序南西北。</div>
+    </div>
+  </div>
+  <div class="col" id="colB">
+    <div class="card">
+      <h2>已輸入的牌（點牌可刪除）</h2>
+      <div id="lists"></div>
+    </div>
+  </div>
+  <div class="col" id="colC">
+    <div class="card">
+      <h2>② 手牌安全度（安全→危險）</h2>
+      <div class="res" id="result"></div>
+    </div>
+    <div class="card">
+      <h2>③ 對手分析與台數</h2>
+      <div id="analysis"></div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<input type="file" id="camInput" accept="image/*" style="display:none">
+<script>
+async function resizeImage(file, maxSize=1024) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function recognizeHand(file) {
+  let apiKey = localStorage.getItem('gemini_api_key');
+  if(!apiKey){
+    apiKey = prompt('請輸入您的 Gemini API Key:');
+    if(!apiKey) return;
+    localStorage.setItem('gemini_api_key', apiKey);
+  }
+  toast('🔄 辨識中，請稍候...', 0); // 0 = 不自動消失
+  try {
+    const base64 = await resizeImage(file);
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        contents: [{ parts: [
+          {text: "辨識這張圖片中「所有」的麻將牌。只回傳一個 JSON 陣列，包含牌的名稱字串。字串必須嚴格使用以下格式：1萬~9萬、1筒~9筒、1條~9條、東、南、西、北、中、發、白。如果有多張一樣的牌，請重複列出。不要包含任何其他文字或 markdown，例如：[\"1萬\",\"2筒\",\"東\",\"東\"]"},
+          {inline_data: {mime_type: 'image/jpeg', data: base64}}
+        ]}]
+      })
+    });
+    const data = await res.json();
+    console.log('API Response:', data); // 印出完整結果方便除錯
+    document.getElementById('toast').classList.remove('on'); // 隱藏等待提示
+    
+    if (data.error) {
+      if (data.error.code === 400 || data.error.code === 403 || data.error.code === 404) { 
+        localStorage.removeItem('gemini_api_key'); 
+        alert(`API Key 錯誤或無此模型 (${data.error.code})\n詳細訊息: ${data.error.message}\n請重新點擊按鈕輸入正確的 API Key。`); 
+      } else alert('辨識失敗: ' + data.error.message);
+      return;
+    }
+    
+    if (!data.candidates || !data.candidates[0].content) {
+       alert('AI 拒絕回應或被安全機制阻擋，請確認照片內容或換個角度重拍。');
+       return;
+    }
+    
+    const text = data.candidates[0].content.parts[0].text;
+    console.log('AI Text:', text);
+    const match = text.match(/\[.*\]/s);
+    if(match){
+      const arr = JSON.parse(match[0]);
+      const newTiles = [];
+      const NM = {'1萬':0,'2萬':1,'3萬':2,'4萬':3,'5萬':4,'6萬':5,'7萬':6,'8萬':7,'9萬':8,'1筒':9,'2筒':10,'3筒':11,'4筒':12,'5筒':13,'6筒':14,'7筒':15,'8筒':16,'9筒':17,'1條':18,'2條':19,'3條':20,'4條':21,'5條':22,'6條':23,'7條':24,'8條':25,'9條':26,'1索':18,'2索':19,'3索':20,'4索':21,'5索':22,'6索':23,'7索':24,'8索':25,'9索':26,'1餅':9,'2餅':10,'3餅':11,'4餅':12,'5餅':13,'6餅':14,'7餅':15,'8餅':16,'9餅':17,'東':27,'南':28,'西':29,'北':30,'中':31,'發':32,'白':33};
+      for(const item of arr) {
+        let name = item.replace(/\s/g, '');
+        if(NM[name] !== undefined) newTiles.push(NM[name]);
+      }
+      if (newTiles.length > 0) {
+        snap();
+        S.hand = newTiles.sort((a,b)=>a-b);
+        if(S.hand.length > 17) S.hand = S.hand.slice(0, 17);
+        save();
+        render();
+        toast(`✅ 成功辨識 ${newTiles.length} 張牌`);
+      } else alert(`AI 找不到麻將牌，或回傳內容無法辨識。\nAI回傳: ${text}`);
+    } else alert(`辨識失敗，回傳格式不符。\nAI回傳: ${text}`);
+  } catch(e) { 
+    document.getElementById('toast').classList.remove('on');
+    alert('發生錯誤: ' + e.message); 
+    console.error(e);
+  }
+}
+
+document.getElementById('camInput').onchange = (e) => {
+  const file = e.target.files[0];
+  if(file) recognizeHand(file);
+  e.target.value = '';
+};
+
+const SUIT=['萬','筒','條','字'],CLS=['m','p','s2','z'];
+const HON=['東','南','西','北','中','發','白'];
+const WIND=['東','南','西','北'];
+const FL=['春','夏','秋','冬','梅','蘭','竹','菊'];
+// 台數常數（各地規則不同，可自行調整）
+const TAI={dealer:1,perRenzhuang:1,flowerMatch:1,flowerKong:2,eightFlowers:8,dragon:1,seatWind:1,roundWind:1};
+const tn=i=>i<27?(i%9+1):HON[i-27];
+const suitOf=t=>t<27?Math.floor(t/9):3;
+const numOf=t=>t%9+1;
+const OPP=[{k:'1',name:'下家',idx:1},{k:'2',name:'對家',idx:2},{k:'3',name:'上家',idx:3}];
+const PNAME=['我','下家','對家','上家'];
+const KEY='twdef_v2';
+let S=load();
+let target='hand',meldMode='d',hist=[];
+
+function fresh(){const o=()=>({d:[],m:[],g:[],a:false});return{hand:[],me:[],p:{1:o(),2:o(),3:o()},f:[[],[],[],[]],cfg:{dealer:0,quan:0,rz:0}}}
+function migrate(s){const f=fresh();Object.assign(f,s);
+  for(const k in f.p){const p=f.p[k];if(!p.g){p.g=[];for(let i=0;i+2<(p.m||[]).length;i+=3)p.g.push({type:'副露',t:p.m.slice(i,i+3)})}
+    p.m=p.g.flatMap(x=>x.t)}
+  return f}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s)return migrate(s);
+  const old=JSON.parse(localStorage.getItem('twdef_v1'));if(old)return migrate(old)}catch(e){}return fresh()}
+function save(){localStorage.setItem(KEY,JSON.stringify(S))}
+function snap(){hist.push(JSON.stringify(S));if(hist.length>100)hist.shift()}
+let toastTimer;
+function toast(m, duration=1300){
+  const t=document.getElementById('toast');
+  t.textContent=m; t.classList.add('on');
+  clearTimeout(toastTimer);
+  if(duration > 0) toastTimer = setTimeout(()=>t.classList.remove('on'), duration);
+}
+
+function seen(){const c=Array(34).fill(0);
+  S.hand.forEach(t=>c[t]++);S.me.forEach(t=>c[t]++);
+  for(const k in S.p){S.p[k].d.forEach(t=>c[t]++);S.p[k].m.forEach(t=>c[t]++)}return c}
+const flowerOwner=f=>S.f.findIndex(a=>a.includes(f));
+
+function tileEl(i,small,count){const b=document.createElement('button');
+  b.className='t '+CLS[suitOf(i)]+(small?' sm':'');
+  b.innerHTML=i<27?`<span class="n">${tn(i)}</span><span class="s">${SUIT[suitOf(i)]}</span>`:`<span class="n">${tn(i)}</span>`;
+  if(count!==undefined){b.innerHTML+=`<span class="c">${count}</span>`;if(count<=0)b.classList.add('dead')}
+  return b}
+function flowerEl(f,small){const b=document.createElement('button');
+  b.className='t f'+(small?' sm':'');b.innerHTML=`<span class="n">${FL[f]}</span>`;return b}
+
+function syncM(){for(const k in S.p)S.p[k].m=S.p[k].g.flatMap(x=>x.t)}
+function add(i){
+  const c=seen();
+  if(target in S.p&&meldMode!=='d'){
+    let t,type;
+    if(meldMode==='chi'){if(i>=27||numOf(i)>7){toast('吃請點順子最小的那張（1～7的數牌）');return}t=[i,i+1,i+2];type='吃'}
+    else if(meldMode==='pon'){t=[i,i,i];type='碰'}
+    else{t=[i,i,i,i];type='槓'}
+    const need={};t.forEach(x=>need[x]=(need[x]||0)+1);
+    for(const x in need)if(c[x]+need[x]>4){toast('這組超過4張，請先刪除重複的牌（例如牌河中被吃/碰的那張）');return}
+    snap();S.p[target].g.push({type,t});syncM();save();render();return}
+  if(c[i]>=4){toast('這張牌已經4張都出現了');return}
+  snap();
+  if(target==='hand'){if(S.hand.length>=17){hist.pop();toast('手牌最多17張');return}S.hand.push(i);S.hand.sort((a,b)=>a-b)}
+  else if(target==='me')S.me.push(i);
+  else S.p[target].d.push(i);
+  save();render()}
+function addFlower(f){
+  const who=(target==='hand'||target==='me')?0:Number(target);
+  const o=flowerOwner(f);if(o>=0){toast(FL[f]+'已被'+PNAME[o]+'補了');return}
+  snap();S.f[who].push(f);S.f[who].sort((a,b)=>a-b);save();render()}
+function removeFrom(arr,idx){snap();arr.splice(idx,1);save();render()}
+
+/* ---------- 台數 ---------- */
+const windOf=i=>(i-S.cfg.dealer+4)%4;
+function taiOf(i){
+  const w=windOf(i);let tai=0;const parts=[];
+  if(i===S.cfg.dealer){const n=S.cfg.rz;tai+=TAI.dealer+n*TAI.perRenzhuang;parts.push('莊家'+(n?`（連${n}拉${n}）`:''))}
+  const fl=S.f[i];
+  if(fl.length===8){tai+=TAI.eightFlowers;parts.push('八仙過海')}
+  else{
+    [w,4+w].forEach(f=>{if(fl.includes(f)){tai+=TAI.flowerMatch;parts.push('正花'+FL[f])}});
+    if([0,1,2,3].every(f=>fl.includes(f))){tai+=TAI.flowerKong;parts.push('春夏秋冬花槓')}
+    if([4,5,6,7].every(f=>fl.includes(f))){tai+=TAI.flowerKong;parts.push('梅蘭竹菊花槓')}
+  }
+  if(i>0){
+    const cnt={};S.p[i].m.forEach(t=>{if(t>=27)cnt[t]=(cnt[t]||0)+1});
+    for(const t in cnt){if(cnt[t]>=3){const h=t-27;
+      if(h>=4){tai+=TAI.dragon;parts.push('碰'+HON[h])}
+      else{if(h===w){tai+=TAI.seatWind;parts.push('門風'+HON[h])}
+           if(h===S.cfg.quan){tai+=TAI.roundWind;parts.push('圈風'+HON[h])}}}}
+  }
+  return{tai,parts,wind:w}}
+
+/* ---------- 聽牌/花色推測 ---------- */
+function analyze(o){
+  const d=o.d,n=d.length,notes=[];let bonus=0;const clear=new Set(),collect=new Set();
+  if(n>=3){const s=suitOf(d[n-1]);let k=0;for(let i=n-1;i>=0&&suitOf(d[i])===s;i--)k++;
+    if(k>=3&&s<3){clear.add(s);notes.push(`連切${SUIT[s]}${k}張，正在清${SUIT[s]}（該色較安全）`)}}
+  if(n>=8){const cnt=[0,0,0];d.forEach(t=>{if(t<27)cnt[suitOf(t)]++});
+    for(let s=0;s<3;s++){const others=[0,1,2].filter(x=>x!==s);
+      if(cnt[s]===0&&others.every(x=>cnt[x]>=2)){collect.add(s);bonus+=0.1;notes.push(`整條河沒切過${SUIT[s]}，可能在留${SUIT[s]}（${SUIT[s]}較危險）`)}}
+    for(let s=0;s<3;s++){
+      const early=d.slice(0,6).some(t=>suitOf(t)===s);
+      const late=d.some((t,i)=>i>=7&&suitOf(t)===s&&numOf(t)>=3&&numOf(t)<=7);
+      if(early&&late){bonus+=0.15;notes.push(`早巡切過${SUIT[s]}、後段又切${SUIT[s]}中張 → 手牌可能已成形，疑似聽牌`)}}
+    const lateMid=d.slice(-3).filter(t=>t<27&&numOf(t)>=3&&numOf(t)<=7).length;
+    if(lateMid>=2){bonus+=0.08*lateMid;notes.push('最後幾張連切中張，疑似聽牌')}
+  }
+  const melds=o.g.length;
+  if(melds>=2)notes.push(`已副露${melds}組，牌型偏明顯`);
+  if(o.a)notes.push('你標記為警戒');
+  const tp=Math.min(0.95,Math.max(0,(n-5)*0.05)+melds*0.12+(o.a?0.35:0)+bonus);
+  return{bonus,notes,clear,collect,tp}}
+
+/* ---------- 風險計算 ---------- */
+function oppDanger(tile,o,c,idx){
+  const tags=[];const num=tile<27?numOf(tile):0,suit=suitOf(tile);
+  if(o.d.includes(tile)){return{p:0.02,tags:['現物']}}
+  const an=analyze(o);
+  let base;const v=c[tile];
+  if(tile>=27){base=[0.10,0.08,0.05,0.02,0][Math.min(v,4)];tags.push('字牌已見'+v)}
+  else{base=[0,0.06,0.09,0.12,0.16,0.16,0.16,0.12,0.09,0.06][num];
+    base*=Math.max(0,(4-v))/3;
+    const hasLow=num>3&&o.d.includes(tile-3),hasHigh=num<7&&o.d.includes(tile+3);
+    if(hasLow&&hasHigh){base*=0.4;tags.push('雙筋')}
+    else if(hasLow||hasHigh){base*=(num>=4&&num<=6)?0.8:0.55;tags.push('筋')}
+    const same=o.m.filter(t=>suitOf(t)===suit).length;
+    const other=o.m.filter(t=>suitOf(t)!==suit&&t<27).length;
+    if(same>=3&&other===0){base*=1.4;tags.push('疑似做'+SUIT[suit]+'色')}
+    if(an.clear.has(suit)){base*=0.8;tags.push('清'+SUIT[suit]+'中')}
+    if(an.collect.has(suit)){base*=1.3;tags.push('疑似留'+SUIT[suit])}
+  }
+  const n=o.d.length;
+  let thr=n<4?0.6:n<7?1:n<10?1.4:1.8;
+  thr*=1+0.4*o.g.length;
+  if(o.a){thr*=1.8;tags.push('警戒中')}
+  if(an.bonus>0)thr*=1+an.bonus;
+  if(idx===S.cfg.dealer)thr*=1.1;
+  return{p:Math.min(0.95,base*thr),tags}}
+
+function evaluate(){
+  const c=seen();const uniq=[...new Set(S.hand)];
+  return uniq.map(t=>{
+    const per=OPP.map(({k,name,idx})=>({name,...oppDanger(t,S.p[k],c,idx)}));
+    const safe=per.reduce((a,x)=>a*(1-x.p),1);
+    return{t,risk:1-safe,per}}).sort((a,b)=>a.risk-b.risk)}
+function level(r){return r<0.04?0:r<0.09?1:r<0.16?2:r<0.26?3:4}
+const LN=['很安全','偏安全','普通','偏危險','危險'];
+
+/* ---------- 畫面 ---------- */
+function opt(sel,arr,val){sel.innerHTML=arr.map((n,i)=>`<option value="${i}" ${i===val?'selected':''}>${n}</option>`).join('')}
+function render(){
+  const T=document.getElementById('targets');T.innerHTML='';
+  const tg=[['hand','我的手牌'],['me','我打出'],['1','下家'],['2','對家'],['3','上家']];
+  tg.forEach(([k,n])=>{const b=document.createElement('button');
+    b.className='chip'+(target===k?' on':'')+((k in S.p&&S.p[k].a)?' alert':'');b.textContent=n;
+    b.onclick=()=>{target=k;meldMode='d';render()};T.appendChild(b)});
+  if(target==='hand'){
+    const c=document.createElement('button');c.className='chip';c.style.cssText='background:#1b7a3a;color:#fff;border-color:#1b7a3a';
+    c.innerHTML='📷 拍照辨識';c.onclick=()=>document.getElementById('camInput').click();T.appendChild(c);
+  }
+  const O=document.getElementById('opts');O.innerHTML='';
+  if(target in S.p){
+    const modes=[['d','打出'],['chi','吃'],['pon','碰'],['kan','槓']];
+    O.innerHTML=`<div class="targets" id="modes">${modes.map(([k,n])=>`<button class="chip${meldMode===k?' on':''}" data-m="${k}">${n}</button>`).join('')}</div>
+    <label><input type="checkbox" id="al" ${S.p[target].a?'checked':''}>⚠ 警戒（疑似聽牌/大牌）</label>
+    <div class="hint" style="width:100%">${{d:'點牌＝這家打出的牌',chi:'吃：點「順子最小的那張」，會自動加入三張（例：吃 4-5-6 就點 4）',pon:'碰：點被碰的牌，自動加入三張',kan:'槓：點被槓的牌，自動加入四張'}[meldMode]}${meldMode!=='d'?'。若這張已輸入在牌河，請先刪除避免重複計算。':''}</div>`;
+    document.querySelectorAll('#modes .chip').forEach(b=>b.onclick=()=>{meldMode=b.dataset.m;render()});
+    document.getElementById('al').onchange=e=>{S.p[target].a=e.target.checked;save();render()};
+  }else O.innerHTML='<span class="hint">'+(target==='hand'?'輸入你目前手上的牌（最多17張）':'輸入你自己打出的牌（影響剩餘張數）')+'</span>';
+
+  const c=seen();const P=document.getElementById('picker');P.innerHTML='';
+  for(let i=0;i<34;i++){const b=tileEl(i,false,4-c[i]);b.onclick=()=>add(i);P.appendChild(b)}
+  const FP=document.getElementById('fpicker');FP.innerHTML='';
+  for(let f=0;f<8;f++){const b=flowerEl(f);if(flowerOwner(f)>=0)b.classList.add('dead');b.onclick=()=>addFlower(f);FP.appendChild(b)}
+
+  const dl=document.getElementById('dealer'),qn=document.getElementById('quan'),rz=document.getElementById('rz');
+  opt(dl,PNAME,S.cfg.dealer);opt(qn,WIND,S.cfg.quan);rz.value=S.cfg.rz;
+  dl.onchange=()=>{snap();S.cfg.dealer=+dl.value;save();render()};
+  qn.onchange=()=>{snap();S.cfg.quan=+qn.value;save();render()};
+  rz.onchange=()=>{snap();S.cfg.rz=Math.max(0,+rz.value||0);save();render()};
+
+  const L=document.getElementById('lists');L.innerHTML='';
+  const block=(title,arr,cls,flowers)=>{const r=document.createElement('div');r.className='row';
+    r.innerHTML=`<b>${title}（${arr.length}）</b>`;const l=document.createElement('div');l.className='list '+(cls||'');
+    arr.forEach((t,idx)=>{const e=tileEl(t,true);e.onclick=()=>removeFrom(arr,idx);l.appendChild(e)});
+    if(flowers)flowers.forEach((f,idx)=>{const e=flowerEl(f,true);e.onclick=()=>removeFrom(flowers,idx);l.appendChild(e)});
+    r.appendChild(l);L.appendChild(r)};
+  block('我的手牌',S.hand,'',S.f[0]);block('我打出',S.me);
+  OPP.forEach(({k,name,idx})=>{block(name+' 打出'+(S.p[k].a?' ⚠':''),S.p[k].d,'',S.f[idx]);
+    if(S.p[k].g.length){const r=document.createElement('div');r.className='row';
+      r.innerHTML=`<b>${name} 副露（${S.p[k].g.length}組，點整組刪除）</b>`;
+      const l=document.createElement('div');l.className='list';l.style.gap='10px';
+      S.p[k].g.forEach((g,gi)=>{const w=document.createElement('button');
+        w.style.cssText='display:flex;gap:2px;background:#0a2a20;border:2px solid #f4d35e;border-radius:8px;padding:3px;align-items:center';
+        const lb=document.createElement('span');lb.textContent=g.type;lb.style.cssText='color:#f4d35e;font-size:12px;margin-right:2px';w.appendChild(lb);
+        g.t.forEach(t=>w.appendChild(tileEl(t,true)));
+        w.onclick=()=>{snap();S.p[k].g.splice(gi,1);syncM();save();render()};l.appendChild(w)});
+      r.appendChild(l);L.appendChild(r)}});
+
+  const R=document.getElementById('result');R.innerHTML='';
+  if(!S.hand.length)R.innerHTML='<div class="hint">請先輸入你的手牌。</div>';
+  else evaluate().forEach(x=>{const lv=level(x.risk);const d=document.createElement('div');d.className='r';
+    d.appendChild(tileEl(x.t,true));
+    const bd=document.createElement('div');bd.className='badge b'+lv;
+    bd.innerHTML=`${LN[lv]}<br>${(x.risk*100).toFixed(0)}`;d.appendChild(bd);
+    const dt=document.createElement('div');dt.className='detail';
+    const tg=[...new Set(x.per.flatMap(p=>p.tags))].filter(s=>!s.startsWith('字牌已見')).join('、');
+    dt.innerHTML=x.per.map(p=>`${p.name[0]}${(p.p*100).toFixed(0)}`).join(' ')+(tg?`<br><span class="tg">${tg}</span>`:'');
+    d.appendChild(dt);R.appendChild(d)});
+
+  const A=document.getElementById('analysis');A.innerHTML='';
+  const my=taiOf(0);
+  A.innerHTML+=`<div class="pl"><b>我（${WIND[my.wind]}家）</b> <span class="tai">${my.tai} 台${my.parts.length?'：'+my.parts.join('、'):''}</span></div>`;
+  OPP.forEach(({k,name,idx})=>{const o=S.p[k],an=analyze(o),tx=taiOf(idx);
+    const pct=Math.round(an.tp*100);
+    A.innerHTML+=`<div class="pl"><b>${name}（${WIND[tx.wind]}家）</b> 聽牌傾向 ${pct}%　<span class="tai">${tx.tai} 台${tx.parts.length?'：'+tx.parts.join('、'):''}${tx.tai>=3?' ⚠放槍代價大':''}</span>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      ${an.notes.length?`<div style="color:#f4d35e">${an.notes.map(x=>'• '+x).join('<br>')}</div>`:'<span class="hint">目前沒有明顯訊號</span>'}</div>`});
+  const fr=[0,1,2,3,4,5,6,7].filter(f=>flowerOwner(f)<0);
+  A.innerHTML+=`<div class="hint">未出現花牌：${fr.length?fr.map(f=>FL[f]).join(' '):'無'}　｜　估算僅供參考</div>`;
+}
+
+document.getElementById('undo').onclick=()=>{if(!hist.length){toast('沒有可復原的動作');return}
+  S=JSON.parse(hist.pop());save();render()};
+document.getElementById('reset').onclick=()=>{if(confirm('開始新局？會清除牌與花牌（保留莊家設定）')){snap();const cfg=S.cfg;S=fresh();S.cfg=cfg;save();render()}};
+render();
+</script>
+</body>
+</html>

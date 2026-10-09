@@ -1,0 +1,10 @@
+services:
+  mahjong-assist:
+    image: nginx:alpine
+    container_name: mahjong-assist
+    restart: unless-stopped
+    ports:
+      - "8088:80"
+    volumes:
+      # 掛載 public 目錄，若在 NAS 上修改網頁檔案可即時生效
+      - ./public:/usr/share/nginx/html:ro

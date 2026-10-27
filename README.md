@@ -9,17 +9,21 @@
 4. **AI 手牌拍照辨識**：串接 Google Gemini API（支援 3.7-Flash / 3.6-Flash），可直接拍照或上傳已裁切圖片，一鍵自動填入手牌。
 5. **平板最佳化一屏介面**：針對 12 吋平板直放／橫放專門設計，全資訊一屏呈現無需捲動。
 
-## Synology NAS (ds1821) 部署說明
-本專案已同步部署至 Synology DS1821+ 的 `/volume1/docker/MahjongAssist`。
+## Docker 部署說明
 
-### 啟動容器方式：
-1. 進入 DSM > **Container Manager**。
-2. 左側選擇 **專案 (Project)** > **新增 (Create)**。
-3. **專案名稱**：`MahjongAssist`
-4. **路徑**：選擇 `/docker/MahjongAssist`
-5. **來源**：使用現有的 `docker-compose.yml`
-6. 完成後啟動即可。
+本專案支援使用 Docker Compose 快速部署：
+
+```bash
+docker compose up -d
+```
+
+### NAS / 容器管理介面部署：
+1. 進入 Synology DSM > **Container Manager**（或相容之 Docker UI）。
+2. 選擇 **專案 (Project)** > **新增 (Create)**。
+3. 設定專案名稱並指定存放 `docker-compose.yml` 的目錄路徑。
+4. 完成後啟動容器。
 
 ### 連線存取：
-- 區網網址：`http://192.168.50.50:8088` 或 `http://cotyds1821:8088`
-- Tailscale 網址：`http://100.105.118.24:8088`
+- 本地存取：`http://localhost:8088`
+- 伺服器 / 區網存取：`http://<YOUR_SERVER_IP>:8088`
+
